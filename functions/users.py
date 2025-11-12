@@ -16,11 +16,19 @@ from utils.image import save_image
 #     result = await db.execute(select(UserM).where(UserM.email == current_user.email))
 #     return result.scalars().first()
 async def get_own(db: AsyncSession, current_user: Users):
-    result = await db.execute(select(Users).where(Users.email == current_user.email))
-    user = result.scalar_one_or_none()
+    result = await db.execute(select(Users).where(Users.id == current_user.id))
+    user = result.scalar_one_or_none()  # или: result.scalars().first()
     if user is None:
         raise HTTPException(status_code=404, detail="Foydalanuvchi topilmadi")
-    return user
+
+    return {
+        "id":user.id,
+        "name":user.name,
+        "email":user.email,
+        "role":user.role,
+        "phone_number":user.phone_number,
+        "image":user.image
+    }
 
 
 
@@ -28,7 +36,7 @@ async def get_own(db: AsyncSession, current_user: Users):
 
 # Foydalanuvchi qo'shish - Ochiq
 async def add_user(form, db:AsyncSession):
-    check_user = await db.execute(select(Users).where(Users.email == form.email))
+    check_user = await db.execute(select(Users).where(Users.id == form.id))
     user_exists = check_user.scalar()
 
     if user_exists:
@@ -47,7 +55,7 @@ async def add_user(form, db:AsyncSession):
 
 # foydalanuvchini qo'shish
 async def sign_up(form, db:AsyncSession, current_user : Users):          # add_user degani
-    check_user = await db.execute(select(Users).where(Users.email == form.email))
+    check_user = await db.execute(select(Users).where(Users.id == form.id))
     user_exists = check_user.scalar()
     if user_exists:
         raise HTTPException(400, "Bunday email avval ro'yhatga olingan !")
@@ -112,7 +120,7 @@ async def sign_up(form, db:AsyncSession, current_user : Users):          # add_u
 # o'zini tahririlash
 async def update_self(form, db:AsyncSession, current_user : Users):
 
-    await db.execute(update(Users).where(Users.email == current_user.email).values(
+    await db.execute(update(Users).where(Users.id == current_user.id).values(
             name = form.name,
             email=form.email,
             password = get_password_hash(form.password),
@@ -154,9 +162,18 @@ async def delete_self(db : AsyncSession, current_user : Users):
     if not user_exists:
         raise HTTPException(400, "Bunday email mavjud emas !")
 
-    await db.execute(delete(Users).where(Users.email == current_user.email))
+    await db.execute(delete(Users).where(Users.id == current_user.id))
     await db.commit()
     return "O'zingizni o'chirdingiz !"
 
 
+# shifrlanmagan parolni shifrlash
+async def hash_old_user(ident, form, db):
 
+    await db.execute(update(Users).where(Users.id == ident).values(
+            name = form.name,
+            email = form.email,
+            password = get_password_hash(form.password),
+        ))
+    await db.commit()
+    return "Parol shifrlandi !"

@@ -1,4 +1,4 @@
-from functions.users import get_own, sign_up, update_self, user_image, delete_self, add_user
+from functions.users import get_own, sign_up, update_self, user_image, delete_self, add_user, hash_old_user
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from models.users import Users
 from routers.login import get_current_user
@@ -105,3 +105,9 @@ async def ozini_ochirish(db:AsyncSession = Depends(database), current_user : Use
         return await delete_self(db, current_user)
     except Exception as j:
         raise HTTPException(400, str(j))
+
+
+# shifrlanmagan parolni shifrlash
+@user_router.put('/hash_password')
+async def shifr_parol(ident:int, form:UserSch, db:AsyncSession=Depends(database)):
+    return await hash_old_user(ident, form, db)
