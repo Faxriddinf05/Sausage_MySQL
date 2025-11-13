@@ -3,8 +3,11 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 
-engine = create_async_engine('mysql+aiomysql://root@localhost:3306/sausage_mysql', echo=True)
 
+engine = create_async_engine(
+    "sqlite+aiosqlite:///./sausage.db",
+    echo=True
+)
 
 AsyncSessionLocal = sessionmaker(
     bind=engine,

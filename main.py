@@ -5,14 +5,27 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.products import product_router
 from routers.orders import order_router
 from routers.order_items import order_item_router
+from db import Base, engine
 
 
-app = FastAPI(docs_url="/", title="Sausage Factory API on MySQL")
+app = FastAPI(docs_url="/", title="Sausage Factory API")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
 )
+
+
+async def create_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    print("✅ Barcha jadvallar yaratildi!")
+
+# --- Dastur ishga tushganda chaqirish ---
+@app.on_event("startup")
+async def on_startup():
+    await create_tables()
+
 
 app.include_router(order_item_router, tags=["Buyurtma elementlari"])
 app.include_router(order_router, tags=["Buyurtma"])

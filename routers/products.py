@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, APIRouter
+from fastapi import Depends, HTTPException, APIRouter, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from db import database
 from models.products import Products
@@ -8,6 +8,7 @@ from sqlalchemy import update, delete
 from datetime import datetime, timedelta
 from models.order_items import OrderItem
 from models.orders import Order
+import os
 
 product_router = APIRouter()
 
@@ -151,22 +152,47 @@ async def add_product(form:SchemaProducts, db:AsyncSession = Depends(database)):
     return "Mahsulot bazaga qo'shildi !"
 
 
-## Mahsulotga rasm yuklash uchun API (Bu hozircha yopilgan, agar zarurat bo'lsa ishlatib beriladi)
-# @product_router.post("/Mahsulotga_rasm_yuklash")       # bitmagan funksiya - hato
-# async def product(file, db: AsyncSession, current_user : Users):
-#
-#     image_filename = await save_image(file)
-#
-#     async with db as session:
-#         result = await session.execute(select(Products).filter(Products.id == current_user.id))
-#         user = result.scalar()
-#
-#         if not user:
-#             raise HTTPException(status_code=404, detail="User topilmadi")
-#
-#         user.image = image_filename
-#         await session.commit()
-#         return "Rasm yuklandi !"
+
+UPLOAD_DIR = "images"  # папка для изображений
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+
+# Mahsulotga rasm yuklash uchun API (Bu hozircha yopilgan, agar zarurat bo'lsa ishlatib beriladi)
+
+@product_router.post("/{product_id}/rasm-yuklash")
+async def upload_product_image(
+    product_id: int,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(database),
+):
+    try:
+        # Проверяем, существует ли продукт
+        result = await db.execute(select(Products).filter(Products.id == product_id))
+        product = result.scalars().first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Продукт не найден")
+
+        # Проверка типа файла
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Можно загружать только изображения")
+
+        # Генерация уникального имени файла
+        filename = f"product_{product_id}_{file.filename}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
+
+        # Сохраняем файл
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+
+        # Сохраняем путь в базе
+        product.image = f"/{file_path}"  # например: /static/products/product_1_image.jpg
+        await db.commit()
+
+        return {"message": "Изображение успешно добавлено", "image_url": product.image}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Mahsulotni tahrirlash (o'zgartirish) uchun API
