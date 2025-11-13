@@ -5,6 +5,9 @@ from models.products import Products
 from schemas.products import SchemaProducts
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
+from datetime import datetime, timedelta
+from models.order_items import OrderItem
+from models.orders import Order
 
 product_router = APIRouter()
 
@@ -25,6 +28,112 @@ async def get_product(ident:int = None, db:AsyncSession = Depends(database)):
     else:
         a = await db.execute(select(Products))
         return a.scalars().all()
+
+
+@product_router.get("/stats")
+async def get_stats(db: AsyncSession = Depends(database)):
+    try:
+        # 1. Остаток продуктов
+        result = await db.execute(select(Products))
+        products = result.scalars().all()
+        stock = {p.name: p.quantity for p in products}
+
+        # 2. Общие продажи
+        result = await db.execute(select(OrderItem.quantity))
+        total_sold = sum([item[0] for item in result.all()])
+
+        # 3. Продажи за неделю
+        week_ago = datetime.now() - timedelta(days=7)
+        result = await db.execute(
+            select(OrderItem.quantity)
+            .join(Order)
+            .filter(Order.created_at >= week_ago)
+        )
+        sold_week = sum([item[0] for item in result.all()])
+
+        # 4. Продажи за месяц
+        month_ago = datetime.now() - timedelta(days=30)
+        result = await db.execute(
+            select(OrderItem.quantity)
+            .join(Order)
+            .filter(Order.created_at >= month_ago)
+        )
+        sold_month = sum([item[0] for item in result.all()])
+
+        return {
+            "остатки всех продуктов": stock,
+            "суммарно сколько всего продано": total_sold,
+            "сколько продано за последние 7 дней": sold_week,
+            "сколько продано за последние 30 дней": sold_month
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+
+
+
+# 1️⃣ Остатки продуктов
+@product_router.get("/stock")
+async def get_stock(db: AsyncSession = Depends(database)):
+    try:
+        result = await db.execute(select(Products))
+        products = result.scalars().all()
+        stock = {p.name: p.quantity for p in products}
+        return {"stock": stock}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# 2️⃣ Общие продажи
+@product_router.get("/total-sold")
+async def get_total_sold(db: AsyncSession = Depends(database)):
+    try:
+        result = await db.execute(select(OrderItem.quantity))
+        total_sold = sum([item[0] for item in result.all()])
+        return {"total_sold": total_sold}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# 3️⃣ Продажи за неделю
+@product_router.get("/week")
+async def get_week_sales(db: AsyncSession = Depends(database)):
+    try:
+        week_ago = datetime.now() - timedelta(days=7)
+        result = await db.execute(
+            select(OrderItem.quantity)
+            .join(Order)
+            .filter(Order.created_at >= week_ago)
+        )
+        sold_week = sum([item[0] for item in result.all()])
+        return {"sold_last_week": sold_week}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# 4️⃣ Продажи за месяц
+@product_router.get("/month")
+async def get_month_sales(db: AsyncSession = Depends(database)):
+    try:
+        month_ago = datetime.now() - timedelta(days=30)
+        result = await db.execute(
+            select(OrderItem.quantity)
+            .join(Order)
+            .filter(Order.created_at >= month_ago)
+        )
+        sold_month = sum([item[0] for item in result.all()])
+        return {"sold_last_month": sold_month}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+
 
 
 # Mahsulot qo'shish uchun API
