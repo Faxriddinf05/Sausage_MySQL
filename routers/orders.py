@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
-from db import database
+from db import get_db
 from models.orders import Order
 from models.order_items import OrderItem
 from models.products import Products
@@ -13,14 +13,14 @@ order_router = APIRouter()
 
 # Barcha buyurtmalarni ko'rish uchun API
 @order_router.get("/Buyurtmalarni_ko'rish")
-async def get_all_orders(db: AsyncSession = Depends(database)):
+async def get_all_orders(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Order))
     return result.scalars().all()
 
 
 # Bitta buyurtmani ID orqali ko'rish uchun API
 @order_router.get("/Buyurtmani_id_bilan_ko'rish")
-async def get_order(ident: int, db: AsyncSession = Depends(database)):
+async def get_order(ident: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Order).where(Order.id == ident))
     order = result.scalar()
     if not order:
@@ -30,7 +30,7 @@ async def get_order(ident: int, db: AsyncSession = Depends(database)):
 
 # Buyurtma yaratish (Order + Order_item) uchun API
 @order_router.post("/Buyurtma_yaratish")
-async def create_order(form: SchemaOrder, db: AsyncSession = Depends(database)):
+async def create_order(form: SchemaOrder, db: AsyncSession = Depends(get_db)):
     """
     SchemaOrder tarkibi:
     {
@@ -87,7 +87,7 @@ async def create_order(form: SchemaOrder, db: AsyncSession = Depends(database)):
 
 # Buyurtma statusini o'zgartirish (uchun API)
 @order_router.put("/Buyurtma_statusini_o'zgartirish")
-async def update_order_status(ident: int, status: str, db: AsyncSession = Depends(database)):
+async def update_order_status(ident: int, status: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Order).where(Order.id == ident))
     order = result.scalar()
     if not order:
@@ -100,7 +100,7 @@ async def update_order_status(ident: int, status: str, db: AsyncSession = Depend
 
 # Buyurtmani o'chirish uchun API
 @order_router.delete("/Buyurtmani_o'chirish")
-async def delete_order(ident: int, db: AsyncSession = Depends(database)):
+async def delete_order(ident: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Order).where(Order.id == ident))
     order = result.scalar()
     if not order:

@@ -1,11 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from db import Base, engine, get_db
 from routers.users import user_router
 from routers.login import login_router
 from fastapi.middleware.cors import CORSMiddleware
 from routers.products import product_router
 from routers.orders import order_router
 from routers.order_items import order_item_router
-from db import Base, engine
+import models
 
 
 app = FastAPI(docs_url="/", title="Sausage Factory API")
@@ -15,17 +17,16 @@ app.add_middleware(
     allow_origins=["*"],
 )
 
-
-async def create_tables():
+@app.on_event("startup")
+async def startup_event():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("✅ Barcha jadvallar yaratildi!")
 
-# --- Dastur ishga tushganda chaqirish ---
-@app.on_event("startup")
-async def on_startup():
-    await create_tables()
 
+@app.get("/ping-db")
+async def ping_db(db: AsyncSession = Depends(get_db)):
+    result = await db.execute("SELECT 1")
+    return {"db_status": result.scalar()}
 
 app.include_router(order_item_router, tags=["Buyurtma elementlari"])
 app.include_router(order_router, tags=["Buyurtma"])
