@@ -138,49 +138,49 @@ async def login_for_access_token(
             "role": getattr(user, 'role', None)
         }
 
-    @login_router.post("/refresh_token", response_model=Token)
-    async def refresh_token(
-            refresh_request: RefreshTokenRequest,
-            db : AsyncSession = Depends(get_db)
-    ):
-        payload = await decode_token_payload(refresh_request.refresh_token)
-        email: Optional[str] = payload.get("sub")
-        token_type: Optional[str] = payload.get("token_type")
+@login_router.post("/refresh_token", response_model=Token)
+async def refresh_token(
+        refresh_request: RefreshTokenRequest,
+        db : AsyncSession = Depends(get_db)
+):
+    payload = await decode_token_payload(refresh_request.refresh_token)
+    email: Optional[str] = payload.get("sub")
+    token_type: Optional[str] = payload.get("token_type")
 
-        if email is None or token_type != "refresh":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: Not a refresh token or subject missing",
-            )
-
-        async with db as session:
-            query = select(UserM).where(UserM.email == email)
-            result = await session.execute(query)
-            user = result.scalar_one_or_none()
-
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User associated with refresh token not found",
-            )
-
-        if hasattr(user, 'is_active') and not user.is_active:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
-
-        new_access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        new_access_token = create_access_token(
-            data={"sub": user.email}, expires_delta=new_access_token_expires
+    if email is None or token_type != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token: Not a refresh token or subject missing",
         )
 
-        new_refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
-        new_refresh_token = create_refresh_token(
-            data={"sub": user.email}, expires_delta=new_refresh_token_expires
+    async with db as session:
+        query = select(Users).where(Users.email == email)
+        result = await session.execute(query)
+        user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User associated with refresh token not found",
         )
 
-        return {
-            "id": user.id,
-            "access_token": new_access_token,
-            "refresh_token": new_refresh_token,
-            "token_type": "bearer",
-            "role": getattr(user, 'role', None)
-        }
+    if hasattr(user, 'is_active') and not user.is_active:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
+
+    new_access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    new_access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=new_access_token_expires
+    )
+
+    new_refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+    new_refresh_token = create_refresh_token(
+        data={"sub": user.email}, expires_delta=new_refresh_token_expires
+    )
+
+    return {
+        "id": user.id,
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+        "role": getattr(user, 'role', None)
+    }
