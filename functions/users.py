@@ -67,7 +67,6 @@ async def sign_up(form, db:AsyncSession, current_user : Users):          # add_u
         password = get_password_hash(form.password),
         role = "user",
         phone_number = form.phone_number,
-        image = form.image
     )
     db.add(new_user)
     await db.commit()
