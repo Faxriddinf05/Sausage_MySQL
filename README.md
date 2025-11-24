@@ -2,4 +2,4 @@
 
 Не законченный потому что ещё надо добавить многое
 
-Работает на этом - https://sausagemysql-production.up.railway.app/
+
