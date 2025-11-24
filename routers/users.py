@@ -12,11 +12,11 @@ from schemas.users import UserSch
 user_router = APIRouter()
 admin_router = APIRouter()
 
-# Barchani ko'rish
-@admin_router.get('/get_users')
-async def barchani_korish(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Users))
-    return result.scalars().all()
+# # Barchani ko'rish
+# @admin_router.get('/get_users')
+# async def barchani_korish(db: AsyncSession = Depends(get_db)):
+#     result = await db.execute(select(Users))
+#     return result.scalars().all()
 
 
 # Foydalanuvchi qo'shish - Ochiq
