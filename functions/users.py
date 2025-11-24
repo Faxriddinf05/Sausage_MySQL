@@ -96,23 +96,23 @@ async def sign_up(form, db:AsyncSession, current_user : Users):          # add_u
 
 
 
-# # admin qo'shish
-# async def add_admin(form, db:AsyncSession, current_user : Users):
-#     check_user = await db.execute(select(Users).where(Users.role == current_user.role))
-#     user_info = check_user.scalar()
-#     if user_info.role != "admin":
-#         raise HTTPException(403, "Sizga ruxsat yo'q !")
-#
-#     new_admin = Users(
-#         full_name = form.full_name,
-#         role = "admin",
-#         password = get_password_hash(form.password),
-#         email = form.email,
-#         phone_number = form.phone_number
-#     )
-#     db.add(new_admin)
-#     await db.commit()
-#     return "Admin qo'shildi !"
+# admin qo'shish
+async def add_admin(form, db:AsyncSession, current_user : Users):
+    check_user = await db.execute(select(Users).where(Users.role == current_user.role))
+    user_info = check_user.scalar()
+    if user_info.role != "admin":
+        raise HTTPException(403, "Sizga ruxsat yo'q !")
+
+    new_admin = Users(
+        full_name = form.full_name,
+        role = "admin",
+        password = get_password_hash(form.password),
+        email = form.email,
+        phone_number = form.phone_number
+    )
+    db.add(new_admin)
+    await db.commit()
+    return "Admin qo'shildi !"
 
 
 

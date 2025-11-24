@@ -1,4 +1,4 @@
-from functions.users import get_own, sign_up, update_self, user_image, delete_self, add_user, hash_old_user
+from functions.users import get_own, sign_up, update_self, user_image, delete_self, add_user, hash_old_user, add_admin
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from models.users import Users
 from routers.login import get_current_user
@@ -10,10 +10,10 @@ from schemas.users import UserSch
 
 
 user_router = APIRouter()
-# admin_router = APIRouter()
+admin_router = APIRouter()
 
 # Barchani ko'rish
-@user_router.get('/get_users')
+@admin_router.get('/get_users')
 async def barchani_korish(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Users))
     return result.scalars()
@@ -42,7 +42,7 @@ async def ozini_korish(db: AsyncSession = Depends(get_db), current_user: Users =
 
 
 # Barchani ko'rish uchun API (Adminga hos ish)
-@user_router.get('/get_users_lock')
+@admin_router.get('/get_users_lock')
 async def foydalanuvchilarni_korish(db:AsyncSession=Depends(get_db), current_user: Users = Depends(get_current_user)):
     result = await db.execute(select(Users))
     try:
@@ -52,7 +52,7 @@ async def foydalanuvchilarni_korish(db:AsyncSession=Depends(get_db), current_use
 
 
 # Foydalanuvchi qo'shish uchun API, hamda ro'yxatdan o'tish
-@user_router.post('/post_users')
+@admin_router.post('/post_users')
 async def foydalanuvchi_qoshish(form:UserSch, db:AsyncSession = Depends(get_db), current_user : Users = Depends(get_current_user)):
     try:
         return await sign_up(form, db, current_user)
@@ -70,17 +70,16 @@ async def foydalanuvchi_qoshish(form:UserSch, db:AsyncSession = Depends(get_db),
 
 
 
-# (zarur bo'lsa ishlatib beriladi)
-# @admin_router.post('/post_admin')
-# async def admin_qoshish(form:UserSch, db:AsyncSession = Depends(get_db), current_user : Users = Depends(get_current_user)):
-#     try:
-#         return await add_admin(form, db, current_user)
-#     except Exception as f:
-#         raise HTTPException(400, str(f))
+@admin_router.post('/post_admin')
+async def admin_qoshish(form:UserSch, db:AsyncSession = Depends(get_db), current_user : Users = Depends(get_current_user)):
+    try:
+        return await add_admin(form, db, current_user)
+    except Exception as f:
+        raise HTTPException(400, str(f))
 
 
 # o'zini tahrirlash uchun API (o'zi haqidagi ma'lumotlarni o'zgartirish)
-@user_router.put('/put_own')
+@admin_router.put('/put_own')
 async def ozini_tahrirlash(form:UserSch, db:AsyncSession = Depends(get_db), current_user : Users = Depends(get_current_user)):
     try:
         return await update_self(form, db, current_user)
@@ -89,7 +88,7 @@ async def ozini_tahrirlash(form:UserSch, db:AsyncSession = Depends(get_db), curr
 
 
 # o'ziga rasm yuklash uchun API
-@user_router.post('/load_image')
+@admin_router.post('/load_image')
 async def oziga_rasm_yuklash(file:UploadFile, db:AsyncSession = Depends(get_db), current_user : Users = Depends(get_current_user)):
     try:
         return await user_image(file, db, current_user)
@@ -99,7 +98,7 @@ async def oziga_rasm_yuklash(file:UploadFile, db:AsyncSession = Depends(get_db),
 
 
 # o'zini o'chirish uchun API (o'zini tizimdan chiqarib yuborish)
-@user_router.delete('/delete_self')
+@admin_router.delete('/delete_self')
 async def ozini_ochirish(db:AsyncSession = Depends(get_db), current_user : Users = Depends(get_current_user)):
     try:
         return await delete_self(db, current_user)
