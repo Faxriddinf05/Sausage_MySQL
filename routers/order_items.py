@@ -3,7 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
 from db import get_db
+from models import Users
 from models.order_items import OrderItem
+from routers.login import get_current_user
 from schemas.order_items import SchemaOrderItem
 
 order_item_router = APIRouter()
@@ -11,14 +13,14 @@ order_item_router = APIRouter()
 
 # Barcha buyurtma elementlarini ko‘rish uchun API
 @order_item_router.get("/Buyurtma_elementlarini_ko'rish")
-async def get_all_order_items(db: AsyncSession = Depends(get_db)):
+async def get_all_order_items(db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     result = await db.execute(select(OrderItem))
     return result.scalars().all()
 
 
 # Bitta order_item ni ID orqali ko‘rish uchun API
 @order_item_router.get("/Buyurtma_elementini_id_bilan_ko'rish")
-async def get_order_item(ident: int, db: AsyncSession = Depends(get_db)):
+async def get_order_item(ident: int, db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     result = await db.execute(select(OrderItem).where(OrderItem.id == ident))
     item = result.scalar()
     if not item:
@@ -28,7 +30,7 @@ async def get_order_item(ident: int, db: AsyncSession = Depends(get_db)):
 
 # Buyurtmaga mahsulot qo‘shish uchun API
 @order_item_router.post("/Buyurtmaga_mahsulot_qo'shish")
-async def add_order_item(form: SchemaOrderItem, db: AsyncSession = Depends(get_db)):
+async def add_order_item(form: SchemaOrderItem, db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     new_item = OrderItem(
         product_id=form.product_id,
         amount=form.amount,
@@ -44,7 +46,7 @@ async def add_order_item(form: SchemaOrderItem, db: AsyncSession = Depends(get_d
 
 # Buyurtma elementini tahrirlash uchun API (tahrirlash = o'zgartirish)
 @order_item_router.put("/Buyurtma_elementini_tahrirlash")
-async def update_order_item(ident: int, form: SchemaOrderItem, db: AsyncSession = Depends(get_db)):
+async def update_order_item(ident: int, form: SchemaOrderItem, db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     result = await db.execute(select(OrderItem).where(OrderItem.id == ident))
     item = result.scalar()
     if not item:
@@ -66,7 +68,7 @@ async def update_order_item(ident: int, form: SchemaOrderItem, db: AsyncSession 
 
 # Buyurtma elementini o‘chirish uchun API
 @order_item_router.delete("/Buyurtma_elementini_o'chirish")
-async def delete_order_item(ident: int, db: AsyncSession = Depends(get_db)):
+async def delete_order_item(ident: int, db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     result = await db.execute(select(OrderItem).where(OrderItem.id == ident))
     item = result.scalar()
     if not item:

@@ -1,7 +1,9 @@
 from fastapi import Depends, HTTPException, APIRouter, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from db import get_db
+from models import Users
 from models.products import Products
+from routers.login import get_current_user
 from schemas.products import SchemaProducts
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
@@ -15,14 +17,14 @@ product_router = APIRouter()
 
 # Barcha mahsulotlarni ko'rish uchun API
 @product_router.get("/Mahsulotlarni_ko'rish")   # barcha ma'lumotlarni ko'rish
-async def get_all(db:AsyncSession = Depends(get_db)):
+async def get_all(db:AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     result = await db.execute(select(Products))
     return result.scalars().all()
 
 
 # Mahsulotlarni tartibi ya'ni ID bo'yicha ko'rish uchun API
 @product_router.get("/Mahsulotlarni_id_bilan_ko'rish")
-async def get_product(ident:int = None, db:AsyncSession = Depends(get_db)):
+async def get_product(ident:int = None, db:AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     if ident:
         a = await db.execute(select(Products).where(Products.id == ident))
         return a.scalar()
@@ -32,7 +34,7 @@ async def get_product(ident:int = None, db:AsyncSession = Depends(get_db)):
 
 
 @product_router.get("/stats")
-async def get_stats(db: AsyncSession = Depends(get_db)):
+async def get_stats(db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     try:
         # 1. Остаток продуктов
         result = await db.execute(select(Products))
@@ -79,7 +81,7 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
 
 # 1️⃣ Остатки продуктов
 @product_router.get("/stock")
-async def get_stock(db: AsyncSession = Depends(get_db)):
+async def get_stock(db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     try:
         result = await db.execute(select(Products))
         products = result.scalars().all()
@@ -91,7 +93,7 @@ async def get_stock(db: AsyncSession = Depends(get_db)):
 
 # 2️⃣ Общие продажи
 @product_router.get("/total-sold")
-async def get_total_sold(db: AsyncSession = Depends(get_db)):
+async def get_total_sold(db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     try:
         result = await db.execute(select(OrderItem.quantity))
         total_sold = sum([item[0] for item in result.all()])
@@ -102,7 +104,7 @@ async def get_total_sold(db: AsyncSession = Depends(get_db)):
 
 # 3️⃣ Продажи за неделю
 @product_router.get("/week")
-async def get_week_sales(db: AsyncSession = Depends(get_db)):
+async def get_week_sales(db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     try:
         week_ago = datetime.now() - timedelta(days=7)
         result = await db.execute(
@@ -118,7 +120,7 @@ async def get_week_sales(db: AsyncSession = Depends(get_db)):
 
 # 4️⃣ Продажи за месяц
 @product_router.get("/month")
-async def get_month_sales(db: AsyncSession = Depends(get_db)):
+async def get_month_sales(db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     try:
         month_ago = datetime.now() - timedelta(days=30)
         result = await db.execute(
@@ -139,7 +141,7 @@ async def get_month_sales(db: AsyncSession = Depends(get_db)):
 
 # Mahsulot qo'shish uchun API
 @product_router.post("/Mahsulot_qo'shish")
-async def add_product(form:SchemaProducts, db:AsyncSession = Depends(get_db)):
+async def add_product(form:SchemaProducts, db:AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     product = Products(
         name = form.name,
         heading = form.heading,
@@ -164,8 +166,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 async def upload_product_image(
     product_id: int,
     file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db),
-):
+    db: AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     try:
         # Проверяем, существует ли продукт
         result = await db.execute(select(Products).filter(Products.id == product_id))
@@ -197,7 +198,7 @@ async def upload_product_image(
 
 # Mahsulotni tahrirlash (o'zgartirish) uchun API
 @product_router.put("/Mahsulot_tahrirlash")
-async def update_product(ident: int, form:SchemaProducts, db:AsyncSession = Depends(get_db)):
+async def update_product(ident: int, form:SchemaProducts, db:AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     result = await db.execute(select(Products).where(Products.id == ident))
     product = result.scalar()
     if not product:
@@ -216,7 +217,7 @@ async def update_product(ident: int, form:SchemaProducts, db:AsyncSession = Depe
 
 # Mahsulotni o'chirib yuborish uchun API
 @product_router.delete("/Mahsulot_o'chirish")
-async def delete_product(ident: int, db:AsyncSession = Depends(get_db)):
+async def delete_product(ident: int, db:AsyncSession = Depends(get_db), current_user: Users = Depends(get_current_user)):
     result = await db.execute(select(Products).where(Products.id == ident))
     product = result.scalar()
     if not product:
