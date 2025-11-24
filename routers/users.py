@@ -16,7 +16,7 @@ admin_router = APIRouter()
 @admin_router.get('/get_users')
 async def barchani_korish(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Users))
-    return result.scalars()
+    return result.scalars().all()
 
 
 # Foydalanuvchi qo'shish - Ochiq
