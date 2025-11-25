@@ -106,7 +106,7 @@ async def ozini_ochirish(db:AsyncSession = Depends(get_db), current_user : Users
         raise HTTPException(400, str(j))
 
 
-# shifrlanmagan parolni shifrlash
-@user_router.put('/hash_password')
-async def shifr_parol(ident:int, form:UserSch, db:AsyncSession=Depends(get_db)):
-    return await hash_old_user(ident, form, db)
+# # shifrlanmagan parolni shifrlash
+# @user_router.put('/hash_password')
+# async def shifr_parol(ident:int, form:UserSch, db:AsyncSession=Depends(get_db)):
+#     return await hash_old_user(ident, form, db)

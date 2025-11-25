@@ -45,7 +45,7 @@ async def add_user(form, db:AsyncSession):
     new_user = Users(
         name = form.name,
         email = form.email,
-        password = form.password,
+        password = get_password_hash(form.password),
         role = "user",
         phone_number = form.phone_number,
     )
@@ -166,13 +166,13 @@ async def delete_self(db : AsyncSession, current_user : Users):
     return "O'zingizni o'chirdingiz !"
 
 
-# shifrlanmagan parolni shifrlash
-async def hash_old_user(ident, form, db):
-
-    await db.execute(update(Users).where(Users.id == ident).values(
-            name = form.name,
-            email = form.email,
-            password = get_password_hash(form.password),
-        ))
-    await db.commit()
-    return "Parol shifrlandi !"
+# # shifrlanmagan parolni shifrlash
+# async def hash_old_user(ident, form, db):
+#
+#     await db.execute(update(Users).where(Users.id == ident).values(
+#             name = form.name,
+#             email = form.email,
+#             password = get_password_hash(form.password),
+#         ))
+#     await db.commit()
+#     return "Parol shifrlandi !"
