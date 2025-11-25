@@ -19,15 +19,15 @@ admin_router = APIRouter()
 #     return result.scalars().all()
 
 
-# Foydalanuvchi qo'shish - Ochiq
-@user_router.post('/add_user')
-async def add_user_open(form:UserSch, db: AsyncSession = Depends(get_db)):
-    try:
-        return await add_user(form, db)
-    except Exception as e:
-        raise e
-    except HTTPException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+# # Foydalanuvchi qo'shish - Ochiq
+# @user_router.post('/add_user')
+# async def add_user_open(form:UserSch, db: AsyncSession = Depends(get_db)):
+#     try:
+#         return await add_user(form, db)
+#     except Exception as e:
+#         raise e
+#     except HTTPException as e:
+#         raise HTTPException(status_code=400, detail=str(e))
 
 # O'zini ko'rish uchun API
 @user_router.get('/get_own_lock')

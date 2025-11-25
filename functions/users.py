@@ -34,24 +34,24 @@ async def get_own(db: AsyncSession, current_user: Users):
 
 
 
-# Foydalanuvchi qo'shish - Ochiq
-async def add_user(form, db:AsyncSession):
-    check_user = await db.execute(select(Users).where(Users.id == form.id))
-    user_exists = check_user.scalar()
-
-    if user_exists:
-        raise HTTPException(400, "Bunday email avval ro'yhatga olingan !")
-
-    new_user = Users(
-        name = form.name,
-        email = form.email,
-        password = get_password_hash(form.password),
-        role = "user",
-        phone_number = form.phone_number,
-    )
-    db.add(new_user)
-    await db.commit()
-    return {"message": "Foydalanuvchi ro'yhatga olindi", "user_id": new_user.id}
+# # Foydalanuvchi qo'shish - Ochiq
+# async def add_user(form, db:AsyncSession):
+#     check_user = await db.execute(select(Users).where(Users.id == form.id))
+#     user_exists = check_user.scalar()
+#
+#     if user_exists:
+#         raise HTTPException(400, "Bunday email avval ro'yhatga olingan !")
+#
+#     new_user = Users(
+#         name = form.name,
+#         email = form.email,
+#         password = get_password_hash(form.password),
+#         role = "user",
+#         phone_number = form.phone_number,
+#     )
+#     db.add(new_user)
+#     await db.commit()
+#     return {"message": "Foydalanuvchi ro'yhatga olindi", "user_id": new_user.id}
 
 # foydalanuvchini qo'shish
 async def sign_up(form, db:AsyncSession, current_user : Users):          # add_user degani
