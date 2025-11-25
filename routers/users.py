@@ -1,4 +1,4 @@
-from functions.users import get_own, sign_up, update_self, user_image, delete_self, add_user, add_admin
+from functions.users import get_own, sign_up, update_self, user_image, delete_self, add_admin
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from models.users import Users
 from routers.login import get_current_user
