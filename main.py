@@ -17,6 +17,7 @@ app.add_middleware(
     allow_origins=["*"],
 )
 
+# serverda tablelar avtomatik yasaladi
 @app.on_event("startup")
 async def startup_event():
     async with engine.begin() as conn:
